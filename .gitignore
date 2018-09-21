@@ -2,7 +2,9 @@
 ##################
 kubectl
 helm
-*~$
+README.md~
+.gitignore
+.gitignore~
 
 # Compiled source #
 ###################
