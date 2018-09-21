@@ -2,7 +2,6 @@
 ##################
 kubectl
 helm
-*~
 # Compiled source #
 ###################
 #*.com
