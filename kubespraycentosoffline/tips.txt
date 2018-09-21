@@ -1,0 +1,1 @@
+ansible-playbook -i inventory/test/hosts.ini cluster.yml
