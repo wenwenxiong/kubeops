@@ -1,0 +1,26 @@
+---
+  - name: create /etc/kubernetes/specs directory
+    file:
+      path: "{{ kubernetes_spec_dir }}"
+      state: directory
+  - name: copy kubernetes-dashboard.yaml to remote
+    template:
+      src: kubernetes-dashboard.yaml
+      dest: "{{ kubernetes_spec_dir }}/kubernetes-dashboard.yaml"
+  - name: start kubernetes-dashboard service
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/kubernetes-dashboard.yaml
+    register: out
+
+  - block:
+    - name: wait until kubernetes-dashboard pods are ready
+      command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get deployment kubernetes-dashboard -n kube-system -o jsonpath='{.status.availableReplicas}'
+      register: readyReplicas
+      until: readyReplicas.stdout|int == [2, groups['worker'] | length] | min
+      retries: 24
+      delay: 10
+      failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+    - name: fail if any kubernetes-dashboard pods are not ready
+      fail:
+        msg: "Timed out waiting for kubernetes-dashboard pods to be in the ready state."
+      when: readyReplicas.stdout|int != [2, groups['worker'] | length] | min
+    when: run_pod_validation|bool == true 

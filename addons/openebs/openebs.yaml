@@ -1,0 +1,8 @@
+- name: openebs
+  hosts: openebs
+  remote_user: root
+  become: yes
+
+  roles:
+  - loadopenebsimages
+  - openebs

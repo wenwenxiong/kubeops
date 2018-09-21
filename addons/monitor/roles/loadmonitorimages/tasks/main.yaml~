@@ -1,0 +1,12 @@
+---
+  - name: copy monitor image to remote
+    copy:   
+      src: monitor
+      dest: /tmp/
+  - name: copy monitortagandpush.sh to remote
+    copy:   
+      src: monitortagandpush.sh
+      dest: /tmp/
+      mode: 0777
+  - name: load monitor image
+    shell: /tmp/monitortagandpush.sh

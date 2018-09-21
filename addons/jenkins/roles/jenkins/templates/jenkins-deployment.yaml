@@ -1,0 +1,50 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: jenkins
+  namespace: cicd
+  labels:
+    app: jenkins
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: jenkins
+        tier: jenkins
+    spec:
+      containers:
+      - image: portus.teligen.com:5000/kubesprayns/chadmoon/jenkins-docker-kubectl:latest
+        name: jenkins
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+        ports:
+        - containerPort: 8080
+          name: jenkins
+        - containerPort: 50000
+          name: agent
+          protocol: TCP
+        volumeMounts:
+        - name: docker
+          mountPath: /var/run/docker.sock
+        - name: jenkins-persistent-storage
+          mountPath: /root/.jenkins
+        - name: kube-config
+          mountPath: /root/.kube/config
+        - name: image-registry
+          mountPath: /root/.docker
+      volumes:
+      - name: docker
+        hostPath:
+          path: /var/run/docker.sock
+      - name: jenkins-persistent-storage
+        persistentVolumeClaim:
+          claimName: jenkins-pvc
+      - name: kube-config
+        hostPath:
+          path: /root/.kube/config
+      - name: image-registry
+        configMap:
+          name: image-registry-auth

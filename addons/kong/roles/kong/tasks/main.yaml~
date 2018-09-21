@@ -1,0 +1,86 @@
+---
+  - name: create /etc/kubernetes/specs directory
+    file:
+      path: "{{ kubernetes_spec_dir }}"
+      state: directory
+  
+  - name: copy kong-dashboard.yaml to remote
+    template:
+      src: kong-dashboard.yaml
+      dest: "{{ kubernetes_spec_dir }}/kong-dashboard.yaml"
+
+  - name: copy kong_migration_postgres.yaml to remote
+    template:
+      src: kong_migration_postgres.yaml
+      dest: "{{ kubernetes_spec_dir }}/kong_migration_postgres.yaml"
+
+  - name: copy kong_postgres.yaml to remote
+    template:
+      src: kong_postgres.yaml
+      dest: "{{ kubernetes_spec_dir }}/kong_postgres.yaml"
+
+  - name: copy postgres.yaml to remote
+    template:
+      src: postgres.yaml
+      dest: "{{ kubernetes_spec_dir }}/postgres.yaml"
+
+  - name: copy kongadb_postgres.yaml to remote
+    template:
+      src: kongadb_postgres.yaml
+      dest: "{{ kubernetes_spec_dir }}/kongadb_postgres.yaml"
+
+  - name: copy konga.yaml to remote
+    template:
+      src: konga.yaml
+      dest: "{{ kubernetes_spec_dir }}/konga.yaml"
+
+  - name: create postgres
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/postgres.yaml
+
+  - pause: seconds=15
+
+  - name: get the name of the postgres pod running on this node
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get pods -l=app=postgres --template {%raw%}'{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}'{%endraw%} -n default
+    register: pod_name
+    until: pod_name is defined and pod_name.stdout is defined and pod_name.stdout != ""
+    retries: 20
+    delay: 6
+
+  - name: wait until postgres pod is in "Running" state(1/1)
+    #command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get pods {{ pod_name.stdout }} -o=jsonpath='{.status.phase}' -n default
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get pods {{ pod_name.stdout }} -o=jsonpath='{.status.containerStatuses[0].ready}' -n default
+    register: readyPods
+    until: readyPods.stdout == "true"
+    retries: 20
+    delay: 6
+
+  - pause: seconds=15
+
+  - name: create kong_migration_postgres
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/kong_migration_postgres.yaml
+
+  - name: get the name of the kong-migration pod running on this node
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get pods -l=app=kong-migration --template {%raw%}'{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}'{%endraw%} -n default
+    register: pod_name
+    until: pod_name is defined and pod_name.stdout is defined and pod_name.stdout != ""
+    retries: 20
+    delay: 6
+
+  - name: wait until kong-migration pod is in "Succeeded" state
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get pods {{ pod_name.stdout }} -o=jsonpath='{.status.phase}' -n default
+    register: readyPods
+    until: readyPods.stdout == "Succeeded"
+    retries: 20
+    delay: 6
+
+  - name: create kong_postgres
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/kong_postgres.yaml
+
+  - name: create kong-dashboard
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/kong-dashboard.yaml
+
+  - name: create konga db
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/kongadb_postgres.yaml
+
+  - name: create konga
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/konga.yaml

@@ -1,0 +1,15 @@
+---
+  - name: copy helm to remote
+    copy:
+      src: /root/ansible/kismatic/cluster00/helm
+      dest: /usr/bin/helm
+      mode: 0755
+
+  - name: helm client init and add chartmuseum repo
+    shell: helm init --client-only --stable-repo-url http://portus.teligen.com:8988 && helm repo update
+
+  - name: create clusterrolebinding to kube-dashboard for access dashboard without cert file
+    command: kubectl create clusterrolebinding cluster-admin-fordashboard --clusterrole=cluster-admin --user=system:serviceaccount:kube-system:kubernetes-dashboard
+
+  - name: create clusterrolebinding to efk-fluent-bit for RBAC access
+    command: kubectl create clusterrolebinding cluster-admin-efk-fluent-bit --clusterrole=cluster-admin --serviceaccount=logging:efk-fluent-bit

@@ -1,0 +1,15 @@
+- name: remove this hostname from hosts file
+  lineinfile: dest=/etc/hosts regexp='.*{{ inventory_hostname }}$' state=absent
+
+- name: add nodes to hosts file
+  blockinfile:
+    dest: /etc/hosts
+    state: present
+    marker: "# Kismatic hosts {mark}"
+    backup: yes
+    block: |-
+      {% for item in groups['all'] %}
+      {% if hostvars[item].internal_ipv4 is defined %}
+      {{ hostvars[item].internal_ipv4 }} {{ item }}
+      {% endif %}
+      {% endfor %}

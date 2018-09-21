@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: konga
+spec:
+  type: NodePort
+  ports:
+  - name: konga
+    port: 1337
+    targetPort: 1337
+    protocol: TCP
+  selector:
+    app: konga
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: konga
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: konga
+        app: konga
+    spec:
+      containers:
+      - name: konga
+        image: portus.teligen.com:5000/kubesprayns/pantsel/konga
+        env:
+          - name: DB_ADAPTER
+            value: 'postgres'
+          - name: DB_HOST
+            value: postgres
+          - name: DB_USER
+            value: kong
+          - name: DB_PASSWORD
+            value: kong
+        ports:
+        - name: konga
+          containerPort: 1337
+          protocol: TCP

@@ -1,0 +1,8 @@
+- name: kong
+  hosts: kong
+  remote_user: root
+  become: yes
+
+  roles:
+  - loadkongimages
+    #  - kong

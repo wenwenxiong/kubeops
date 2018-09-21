@@ -1,0 +1,12 @@
+---
+  - name: copy openebs image to remote
+    copy:   
+      src: openebs
+      dest: /tmp/
+  - name: copy openebstagandpush.sh to remote
+    copy:   
+      src: openebstagandpush.sh
+      dest: /tmp/
+      mode: 0777
+  - name: load openebs image
+    shell: /tmp/openebstagandpush.sh

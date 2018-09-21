@@ -1,0 +1,22 @@
+---
+  - hosts: master
+    any_errors_fatal: true
+    name: "{{ play_name | default('Start Kubernetes API Server') }}"
+    serial: "{{ serial_count | default('100%') }}"
+    become: yes
+    vars_files:
+      - group_vars/all.yaml
+      - group_vars/container_images.yaml
+
+    pre_tasks:
+      - name: download kube-apiserver image
+        command: docker pull {{ images.kube_apiserver }}
+        register: result
+        until: result|succeeded
+        retries: 2
+        delay: 1
+
+    roles:
+      - role: authorization-policy
+        when: kubernetes_admin_password is defined and kubernetes_admin_password != '' #TODO remove
+      - kube-apiserver

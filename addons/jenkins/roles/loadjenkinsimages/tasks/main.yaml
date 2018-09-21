@@ -1,0 +1,12 @@
+---
+  - name: copy jenkins image to remote
+    copy:   
+      src: jenkins
+      dest: /tmp/
+  - name: copy jenkinstagandpush.sh to remote
+    copy:   
+      src: jenkinstagandpush.sh
+      dest: /tmp/
+      mode: 0777
+  - name: load jenkins image
+    shell: /tmp/jenkinstagandpush.sh chdir=/tmp

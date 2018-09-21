@@ -1,0 +1,20 @@
+---
+  - hosts: all
+    any_errors_fatal: true
+    name: "{{ play_name | default('Install Docker') }}"
+    serial: "{{ serial_count | default('100%') }}"
+    become: yes
+    vars_files:
+      - group_vars/all.yaml
+
+    roles:
+      - role: packages-docker
+        when: allow_package_installation|bool == true
+      - role: docker-registry-cert
+        when: configure_docker_with_private_registry is defined and configure_docker_with_private_registry|bool == true
+      - role: docker-proxy
+        when: >
+          (https_proxy is defined and https_proxy != "") or
+          (http_proxy is defined and http_proxy != "") or
+          (no_proxy is defined and no_proxy != "")
+      - role: docker

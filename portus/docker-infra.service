@@ -1,0 +1,19 @@
+[Unit]
+Description=Docker infra
+Requires=docker.service
+After=docker.service
+
+[Service]
+WorkingDirectory=/usr/local/compose/
+Type=idle
+Restart=always
+# Remove old container items
+ExecStartPre=/usr/bin/docker-compose -f /usr/local/compose/docker-compose.yml down
+# Compose up
+ExecStart=/usr/bin/docker-compose -f /usr/local/compose/docker-compose.yml up
+# Compose stop
+ExecStop=/usr/bin/docker-compose -f /usr/local/compose/docker-compose.yml stop
+
+[Install]
+WantedBy=multi-user.target
+

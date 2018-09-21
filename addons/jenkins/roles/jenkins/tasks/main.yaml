@@ -1,0 +1,35 @@
+---
+  - name: create /etc/kubernetes/specs directory
+    file:
+      path: "{{ kubernetes_spec_dir }}"
+      state: directory
+  
+  - name: copy jenkins-deployment.yaml to remote
+    template:
+      src: jenkins-deployment.yaml
+      dest: "{{ kubernetes_spec_dir }}/jenkins-deployment.yaml"
+
+  - name: copy jenkins-pvc.yaml to remote
+    template:
+      src: jenkins-pvc.yaml
+      dest: "{{ kubernetes_spec_dir }}/jenkins-pvc.yaml"
+
+  - name: copy jenkins-service.yaml to remote
+    template:
+      src: jenkins-service.yaml
+      dest: "{{ kubernetes_spec_dir }}/jenkins-service.yaml"
+
+  - name: create namespace cicd
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} create ns cicd
+
+  - name: create configmap image-registry-auth
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} create configmap image-registry-auth --from-file=/root/.docker/ -n cicd
+
+  - name: create jenkins-pvc
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/jenkins-pvc.yaml
+
+  - name: create jenkins-service
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/jenkins-service.yaml
+
+  - name: create jenkins-deployment
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/jenkins-deployment.yaml

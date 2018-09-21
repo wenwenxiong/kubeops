@@ -1,0 +1,13 @@
+---
+  - name: helm install prometheus-operator monitoring plugin
+    command: helm install --name prometheus-operator --namespace monitoring stable/prometheus-operator
+
+  - pause: seconds=15
+
+  - name: copy kube-prometheus-custom-values.yaml to remote
+    template:
+      src: kube-prometheus-custom-values.yaml
+      dest: "{{ kubernetes_spec_dir }}/kube-prometheus-custom-values.yaml"
+
+  - name: helm install kube-prometheus monitoring plugin
+    command: helm install --name mon --namespace monitoring -f {{ kubernetes_spec_dir }}/kube-prometheus-custom-values.yaml stable/kube-prometheus

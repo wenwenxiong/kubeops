@@ -1,0 +1,4 @@
+---
+  - name: docker load busybox.tar
+    shell: curl http://portus.teligen.com:8888/busybox.tar | docker load
+

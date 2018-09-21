@@ -1,0 +1,3 @@
+---
+  - name: helm install openebs storage plugin
+    command: helm install --name openebs stable/openebs

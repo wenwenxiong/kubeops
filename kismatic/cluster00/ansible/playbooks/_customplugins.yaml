@@ -1,0 +1,15 @@
+---
+  - hosts: master[0]
+    any_errors_fatal: true
+    name: custom plugin install on first Master Node
+    become: yes
+    vars_files:
+      - group_vars/all.yaml
+      - group_vars/container_images.yaml
+
+    roles:
+      - nfs-client
+      - kong
+      - helmcli
+      - logging
+      - monitoring

@@ -1,0 +1,26 @@
+---
+  - name: create /etc/kubernetes/specs directory
+    file:
+      path: "{{ kubernetes_spec_dir }}"
+      state: directory
+  
+  - name: copy istio-crds.yaml to remote
+    template:
+      src: istio-crds.yaml
+      dest: "{{ kubernetes_spec_dir }}/istio-crds.yaml"
+
+  - name: copy istio-certmanager-crds.yaml to remote
+    template:
+      src: istio-certmanager-crds.yaml
+      dest: "{{ kubernetes_spec_dir }}/istio-certmanager-crds.yaml"
+
+  - name: create istio crds
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/istio-crds.yaml
+
+  - name: create istio certmanager crds
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/istio-certmanager-crds.yaml
+
+  - pause: seconds=15
+  
+  - name: helm install istio service mesh
+    command: helm install --name istio --namespace istio-system stable/istio

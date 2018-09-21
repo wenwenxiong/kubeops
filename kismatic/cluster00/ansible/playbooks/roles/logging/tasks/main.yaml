@@ -1,0 +1,8 @@
+---
+  - name: helm install elasticsearch-operator logging plugin
+    command: helm install --name es-operator --namespace logging stable/elasticsearch-operator
+
+  - pause: seconds=15
+
+  - name: helm install efk logging plugin
+    command: helm install --name efk --namespace logging stable/efk

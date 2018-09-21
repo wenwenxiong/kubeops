@@ -1,0 +1,39 @@
+---
+  - hosts: master:worker:ingress:storage
+    any_errors_fatal: true
+    name: "{{ play_name | default('Start Kubernetes Proxy') }}"
+    serial: "{{ serial_count | default('100%') }}"
+    become: yes
+    vars_files:
+      - group_vars/all.yaml
+      - group_vars/container_images.yaml
+
+    pre_tasks:
+      - name: download kube-proxy image
+        command: docker pull {{ images.kube_proxy }}
+        register: result
+        until: result|succeeded
+        retries: 2
+        delay: 1
+
+      - name: determine if kube-proxy.yaml manifest exists
+        stat:
+          path: "{{ kubelet_pod_manifests_dir }}/kube-proxy.yaml"
+        register: pod_stat
+
+      - name: remove kube-proxy.yaml manifest file
+        file:
+          path: "{{ kubelet_pod_manifests_dir }}/kube-proxy.yaml"
+          state: absent
+        when: upgrading is defined and upgrading|bool == true
+
+      - name: wait until kube-proxy is stopped
+        wait_for:
+          port: "{{ kubernetes_proxy_insecure_port }}"
+          state: stopped
+          delay: 1
+          timeout: 60
+        when: pod_stat is defined and pod_stat.stat.exists
+
+    roles:
+      - kube-proxy

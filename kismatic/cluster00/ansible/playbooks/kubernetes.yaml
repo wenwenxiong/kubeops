@@ -1,0 +1,69 @@
+---
+  # Contains list of playbooks to setup a HA enterprise ready kubernetes cluster
+  - include: _all.yaml
+  - include: _additional-files.yaml
+  - include: _hosts.yaml
+    when: modify_hosts_file|bool == true
+  - include: _certs.yaml
+  - include: _kubeconfig.yaml
+  - include: _certs-etcd.yaml
+  - include: _packages-repo.yaml
+    when: allow_package_installation|bool == true
+  # docker
+  - include: _docker.yaml
+    when: docker.enabled|bool == true
+  # ntp
+  - include: _ntp.yaml
+  # etcd
+  - include: _etcd-k8s.yaml
+  - include: _etcd-networking.yaml
+    when: cni.enabled|bool == true and (cni.provider == "calico" or cni.provider == "contiv" or cni.provider == "custom")
+  # kubernetes
+  - include: _kubelet.yaml
+  - include: _kube-apiserver.yaml
+  - include: _kube-scheduler.yaml
+  - include: _kube-controller-manager.yaml
+  # validating has a dependecy on the API server for the static pods
+  - include: _validate-control-plane-node.yaml
+  # kubelet does not have an API yet to retrieve the status of a DS pod
+  # after installing kube-proxy, there is a dependecy on the API server to validate the static pod
+  - include: _kube-proxy.yaml
+  - include: _label-nodes.yaml
+  - include: _calico.yaml
+    when: cni.enabled|bool == true and cni.provider == "calico"
+  - include: _calico-validate.yaml
+    when: cni.enabled|bool == true and cni.provider == "calico"
+  - include: _calico-network-policy.yaml
+    when: cni.enabled|bool == true and cni.provider == "calico"
+  - include: _weave.yaml
+    when: cni.enabled|bool == true and cni.provider == "weave"
+  - include: _weave-validate.yaml
+    when: cni.enabled|bool == true and cni.provider == "weave"
+  - include: _contiv.yaml
+    when: cni.enabled|bool == true and cni.provider == "contiv"
+# add by ourself calico3.0 in custom network mode
+  - include: _customcalico.yaml
+    when: cni.enabled|bool == true and cni.provider == "custom"
+  - include: _customcalico-validate.yaml
+    when: cni.enabled|bool == true and cni.provider == "custom"
+  - include: _customcalico-network-policy.yaml
+    when: cni.enabled|bool == true and cni.provider == "custom"
+  - include: _rescheduler.yaml
+    when: rescheduler.enabled|bool == true
+  - include: _cluster-dns.yaml
+    when: dns.enabled|bool == true
+  - include: _heapster.yaml
+    when: heapster.enabled|bool == true
+  - include: _metrics-server.yaml
+    when: metricsserver.enabled|bool == true
+  - include: _kube-dashboard.yaml
+    when: dashboard.enabled|bool == true
+  - include: _helm.yaml
+    when: helm.enabled|bool == true
+  - include: _nginx-ingress.yaml
+    when: configure_ingress|bool == true
+  - include: _storage.yaml
+    when: configure_storage|bool == true
+  - include: _nfs-volumes.yaml
+    when: nfs_volumes|length > 0
+  - include: _update-version.yaml

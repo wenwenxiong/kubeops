@@ -1,0 +1,17 @@
+---
+  - name: create /etc/kubernetes/specs directory
+    file:
+      path: "{{ kubernetes_spec_dir }}"
+      state: directory
+  - name: copy service definition to remote node
+    template:
+      src: gluster-service.yaml
+      dest: "{{ kubernetes_spec_dir }}/gluster-service.yaml"
+  - name: copy daemonset definition to remote node
+    template:
+      src: gluster-healthz-daemonset.yaml
+      dest: "{{ kubernetes_spec_dir }}/gluster-healthz-daemonset.yaml"
+  - name: create gluster-healthz DaemonSet
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/gluster-healthz-daemonset.yaml
+  - name: create NFS service on the cluster
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/gluster-service.yaml

@@ -1,0 +1,25 @@
+---
+  - name: Install ntp package
+    command: yum install -y ntp
+    run_once: true
+  
+  - name: copy ntp.conf to remote
+    template:
+      src: ntp.conf
+      dest: /etc/ntp.conf
+      owner: "{{ kubernetes_owner }}"
+      group: "{{ kubernetes_group }}"
+      mode: "{{ kubernetes_service_mode }}"
+
+#  - name: start ntp service and enable ntp service
+#    command: systemctl disable chronyd 
+#    run_once: true
+
+  - name: enable ntpd
+    command: systemctl enable ntpd
+    run_once: true
+
+  - name: start ntpd
+    command: systemctl start ntpd
+    run_once: true
+

@@ -1,0 +1,11 @@
+[Unit]
+Description=chartmusuem
+After=network-online.service
+
+[Service]
+WorkingDirectory=/opt/chartstorage
+Restart=always
+ExecStart=/bin/chartmuseum --port=8988 --storage=local --storage-local-rootdir="/opt/chartstorage"
+
+[Install]
+WantedBy=multi-user.target

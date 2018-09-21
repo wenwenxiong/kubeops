@@ -1,0 +1,23 @@
+---
+  - name: wait for node '{{ new_node|lower }}' to register with the API server and become Ready
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get nodes --selector kubernetes.io/hostname={{ new_node|lower }}
+    register: nodeStatus
+    until: nodeStatus|success and "Ready" in nodeStatus.stdout
+    retries: 20
+    delay: 6
+
+  - name: failed getting the status of the node '{{ new_node|lower }}'
+    fail:
+      msg: |
+        An error occurred trying to get the status of the node
+        
+        {{ nodeStatus.stderr }}
+    when: nodeStatus|failure
+
+  - name: fail if node '{{ new_node|lower }}' is not Ready
+    fail:
+      msg: |
+        Node is not in the Ready state
+
+        {{ nodeStatus.stdout }}
+    when: nodeStatus|success and "Ready" not in nodeStatus.stdout

@@ -1,0 +1,10 @@
+---
+  - hosts: all
+    name: "Gather Node Diagnostics"
+    vars_files:
+      - group_vars/all.yaml
+      - group_vars/diagnostics.yaml
+      - group_vars/container_images.yaml
+
+    roles:
+      - diagnose-nodes

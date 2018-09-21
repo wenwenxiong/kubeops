@@ -1,0 +1,42 @@
+global:
+  rbacEnable: true
+
+alertmanager:
+  storageSpec:
+    volumeClaimTemplate:
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+
+prometheus:
+  storageSpec:
+    volumeClaimTemplate:
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+
+grafana:
+  auth:
+    anonymous:
+      enabled: "false"
+  adminPassword: "YourPass123#"
+  ingress:
+    enabled: false
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      kubernetes.io/tls-acme: "true"
+    hosts: 
+      - grafana.test.akomljen.com
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - grafana.test.akomljen.com
+  storageSpec:
+    accessMode: "ReadWriteOnce"
+    resources:
+      requests:
+        storage: 10Gi

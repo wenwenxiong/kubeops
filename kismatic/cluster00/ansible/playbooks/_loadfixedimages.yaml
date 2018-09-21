@@ -1,0 +1,11 @@
+---
+  - hosts: all
+    any_errors_fatal: true
+    name: Smoke Test Load docker images with fixed name on All Node
+    become: yes
+    vars_files:
+      - group_vars/all.yaml
+      - group_vars/container_images.yaml
+
+    roles:
+      - loadfixedimages

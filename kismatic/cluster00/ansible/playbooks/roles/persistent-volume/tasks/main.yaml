@@ -1,0 +1,21 @@
+---
+  - name: get storage cluster IP
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get svc kismatic-storage -n kube-system -o=jsonpath='{.spec.clusterIP}'
+    register: out
+
+  - name: set storage cluster IP
+    set_fact:
+      storage_cluster_ip: "{{ out.stdout }}"
+
+  - name: create /etc/kubernetes/specs directory
+    file:
+      path: "{{ kubernetes_spec_dir }}"
+      state: directory
+      
+  - name: copy pv.yaml to remote
+    template:
+        src: pv.yaml
+        dest: "{{ kubernetes_spec_dir }}/pv.yaml"
+
+  - name: create persistent volume {{ volume_name }}
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/pv.yaml

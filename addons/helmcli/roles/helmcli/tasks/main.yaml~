@@ -1,0 +1,9 @@
+---
+  - name: copy helm to remote
+    copy:
+      src: /root/ansible/kismatic/cluster00/helm
+      dest: /usr/bin/helm
+      mode: 0755
+
+  - name: helm client init and add chartmuseum repo
+    shell: helm init --client-only --stable-repo-url http://portus.teligen.com:8988 && helm repo update

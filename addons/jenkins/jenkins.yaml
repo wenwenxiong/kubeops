@@ -1,0 +1,8 @@
+- name: jenkins
+  hosts: jenkins
+  remote_user: root
+  become: yes
+
+  roles:
+  - loadjenkinsimages
+  - jenkins

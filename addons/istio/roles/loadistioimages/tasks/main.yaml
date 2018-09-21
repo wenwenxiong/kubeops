@@ -1,0 +1,12 @@
+---
+  - name: copy istio image to remote
+    copy:   
+      src: istio
+      dest: /tmp/
+  - name: copy istiotagandpush.sh to remote
+    copy:   
+      src: istiotagandpush.sh
+      dest: /tmp/
+      mode: 0777
+  - name: load istio image
+    shell: /tmp/istiotagandpush.sh chdir=/tmp

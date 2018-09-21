@@ -1,0 +1,87 @@
+---
+  # YUM
+  - name: add Docker yum repository
+    yum_repository:
+      name: docker
+      description: Docker Repository
+      baseurl: "{{ docker_yum_repository_url }}"
+      gpgkey: "{{ docker_yum_gpg_key_url }}"
+      gpgcheck: yes
+    when: ansible_os_family == 'RedHat' and docker.enabled|bool == true
+    environment: "{{proxy_env}}"
+
+  - name: add Kubernetes yum repository
+    yum_repository:
+      name: kubernetes
+      description: Kubernetes Repository
+      baseurl: "{{ kubernetes_yum_repository_url }}"
+      gpgkey: "{{ kubernetes_yum_gpg_key_url }}"
+      gpgcheck: yes
+    when: ansible_os_family == 'RedHat'
+    environment: "{{proxy_env}}"
+
+  - name: add Gluster yum repository
+    yum_repository:
+      name: gluster
+      description: Gluster 3.8
+      baseurl: "http://buildlogs.centos.org/centos/7/storage/x86_64/gluster-3.8/"
+      gpgkey: "https://download.gluster.org/pub/gluster/glusterfs/3.8/3.8.7/rsa.pub"
+      gpgcheck: yes
+    when: ansible_os_family == 'RedHat' and 'storage' in group_names
+    environment: "{{proxy_env}}"
+
+  - name: clean yum cache
+    command: 'yum --disablerepo="*" --enablerepo="docker,kubernetes,gluster" clean all'
+    when: ansible_os_family == 'RedHat'
+    environment: "{{proxy_env}}"
+
+  - name: yum makecache
+    command: 'yum --disablerepo="*" --enablerepo="docker,kubernetes,gluster" makecache'
+    when: ansible_os_family == 'RedHat'
+    environment: "{{proxy_env}}"
+
+  # DEB
+  - name: install apt-transport-https package
+    apt:
+      name: apt-transport-https
+      state: latest
+      update_cache: yes
+    when: ansible_os_family == 'Debian'
+    environment: "{{proxy_env}}"
+
+  - name: add Docker deb key
+    apt_key:
+      url: "{{ docker_deb_gpg_key_url }}"
+    when: ansible_os_family == 'Debian' and docker.enabled|bool == true
+    environment: "{{proxy_env}}"
+  
+  - name: add Kubernetes deb key
+    apt_key:
+      url: "{{ kubernetes_deb_gpg_key_url }}"
+    when: ansible_os_family == 'Debian'
+    environment: "{{proxy_env}}"
+
+  - name: add Docker deb repository
+    apt_repository:
+      repo: 'deb [arch=amd64] {{ docker_deb_repository_url }} xenial stable'
+    when: ansible_os_family == 'Debian' and docker.enabled|bool == true
+    environment: "{{proxy_env}}"
+  
+  - name: add Kubernetes deb repository
+    apt_repository:
+      repo: 'deb {{ kubernetes_deb_repository_url }} kubernetes-xenial main'
+    when: ansible_os_family == 'Debian'
+    environment: "{{proxy_env}}"
+
+  - name: add Gluster deb repository
+    apt_repository:
+      repo: ppa:gluster/glusterfs-3.8
+      update_cache: yes
+    when: ansible_os_family == 'Debian' and 'storage' in group_names
+    environment: "{{proxy_env}}"
+
+  - name: apt-get update
+    apt:
+      update_cache: yes
+    when: ansible_os_family == 'Debian'
+    environment: "{{proxy_env}}"

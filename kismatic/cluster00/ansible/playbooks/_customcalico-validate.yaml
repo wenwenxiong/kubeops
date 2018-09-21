@@ -1,0 +1,30 @@
+---
+  - hosts: master:worker:ingress:storage
+    any_errors_fatal: true
+    name: "{{ play_name | default('Validate Calico Network Components') }}"
+    serial: "{{ serial_count | default('100%') }}"
+    become: yes
+    vars_files:
+      - group_vars/all.yaml
+
+    tasks:
+      - name: get desired number of calico pods
+        command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get ds calico-node -o=jsonpath='{.status.desiredNumberScheduled}' --namespace=kube-system
+        register: desiredPods
+        until: desiredPods|success and desiredPods.stdout|int > 0
+        retries: 20
+        delay: 6
+        run_once: true
+      - name: wait until all calico pods are ready
+        command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get ds calico-node -o=jsonpath='{.status.numberReady}' --namespace=kube-system
+        register: readyPods
+        until: desiredPods.stdout|int == readyPods.stdout|int
+        retries: 20
+        delay: 6
+        failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+        run_once: true
+      - name: fail if any calico pods are not ready
+        fail:
+          msg: "Timed out waiting for all calico pods to be ready."
+        run_once: true
+        when: desiredPods.stdout|int != readyPods.stdout|int

@@ -1,0 +1,3 @@
+kubernetes_spec_dir: /etc/kubernetes/specs
+kubernetes_kubeconfig:
+  kubectl: /root/.kube/config

@@ -1,0 +1,9 @@
+---
+  - hosts: master[0]
+    any_errors_fatal: true
+    name: "Configure PersistentVolumes for NFS"
+    become: yes
+    run_once: true
+
+    roles:
+      - nfs-volume

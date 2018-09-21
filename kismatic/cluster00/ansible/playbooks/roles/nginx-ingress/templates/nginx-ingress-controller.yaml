@@ -1,0 +1,70 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: ingress
+  namespace: kube-system
+spec:
+  template:
+    metadata:
+      labels:
+        name: ingress
+      annotations:
+        kismatic/version: "{{ kismatic_short_version }}"
+        prometheus.io/port: "10254"
+        prometheus.io/scrape: "true"
+    spec:
+      terminationGracePeriodSeconds: 60
+      nodeSelector:
+        kismatic/ingress: "true"
+      containers:
+      - image: {{ images.nginx_ingress_controller }}
+        name: ingress
+        imagePullPolicy: IfNotPresent
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 10254
+            scheme: HTTP
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 10254
+            scheme: HTTP
+          initialDelaySeconds: 15
+          timeoutSeconds: 5
+        # use downward API
+        env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        ports:
+        - containerPort: 80
+          hostPort: 80
+        - containerPort: 443
+          hostPort: 443
+        args:
+        - /nginx-ingress-controller
+        - --default-backend-service=kube-system/default-http-backend
+        - --configmap=$(POD_NAMESPACE)/nginx-conf
+        - --profiling=false
+        - --annotations-prefix=ingress.kubernetes.io
+      serviceAccountName: nginx-ingress-serviceaccount
+---
+apiVersion: v1
+data:
+  enable-vts-status: "true"
+  access-log-path: "/dev/stdout"
+  error-log-path: "/dev/stdout"
+  error-log-level: "warn"
+  proxy-connect-timeout: "60"
+  proxy-read-timeout: "60"
+  proxy-send-timeout: "60"
+kind: ConfigMap
+metadata:
+  name: nginx-conf
+  namespace: kube-system

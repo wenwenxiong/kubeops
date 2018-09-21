@@ -1,0 +1,9 @@
+---
+  - hosts: master
+    any_errors_fatal: true
+    name: "Validate Kubernetes Control Plane is Running"
+    serial: "{{ serial_count | default('100%') }}"
+    become: yes
+    
+    roles:
+      - validate-control-plane-node

@@ -1,0 +1,5 @@
+---
+  - include: _all.yaml
+  - include: _hosts.yaml
+    when: modify_hosts_file|bool == true
+  - include: _preflight.yaml

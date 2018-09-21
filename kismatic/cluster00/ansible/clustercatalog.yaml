@@ -1,0 +1,121 @@
+versions:
+  kubernetes: v1.10.2
+  kubernetes_yum: 1.10.2-0
+  kubernetes_deb: 1.10.2-00
+kubernetes_cluster_name: kubernetes
+kubernetes_admin_password: ""
+tls_directory: /root/ansible/kismatic/cluster00/generated/keys
+kubernetes_services_cidr: 172.20.0.0/16
+kubernetes_pods_cidr: 172.16.0.0/16
+kubernetes_dns_service_ip: 172.20.0.2
+modify_hosts_file: true
+allow_package_installation: true
+disconnected_installation: true
+kuberang_path: kuberang/linux/amd64/kuberang
+kubernetes_load_balanced_fqdn: 192.168.122.200
+kubernetes_api_server_option_overrides: {}
+kube_controller_manager_option_overrides: {}
+kube_scheduler_option_overrides: {}
+kube_proxy_option_overrides: {}
+kubelet_overrides: {}
+additional_files: []
+configure_docker_with_private_registry: true
+docker_certificates_ca_path: /root/ansible/kismatic/cluster00/portus.teligen.com.crt
+docker_registry_full_url: portus.teligen.com:5000/kismatic110
+docker_registry_username: kismatic
+docker_registry_password: thinker@1
+force_etcd_restart: false
+force_apiserver_restart: false
+force_controller_manager_restart: false
+force_scheduler_restart: false
+force_proxy_restart: false
+force_kubelet_restart: false
+force_calico_node_restart: false
+force_docker_restart: false
+configure_ingress: false
+kismatic_preflight_checker: inspector/linux/amd64/kismatic-inspector
+new_node: ""
+nfs_volumes: []
+configure_storage: false
+volume_name: ""
+volume_replica_count: 0
+volume_distribution_count: 0
+volume_storage_class: ""
+volume_quota_gb: 0
+volume_quota_bytes: 0
+volume_mount: ""
+volume_allow_ips: ""
+volume_reclaim_policy: ""
+volume_access_modes: []
+kismatic_short_version: 1.11.0
+online_upgrade: false
+diagnostics_dir: ""
+diagnostics_date_time: ""
+docker:
+  enabled: true
+  logs:
+    driver: json-file
+    opts:
+      max-file: "1"
+      max-size: 50m
+  storage:
+    driver: ""
+    opts: {}
+    opts_list: []
+    direct_lvm_block_device:
+      path: ""
+      thinpool_percent: "95"
+      thinpool_metapercent: "1"
+      thinpool_autoextend_threshold: "80"
+      thinpool_autoextend_percent: "20"
+local_kubeconfig_directory: /root/ansible/kismatic/cluster00/generated/kubeconfig
+cloud_provider: ""
+cloud_config_local: ""
+dns:
+  enabled: true
+  provider: kubedns
+  options:
+    replicas: 2
+run_pod_validation: true
+cni:
+  enabled: true
+  provider: calico
+  options:
+    calico:
+      mode: overlay
+      log_level: info
+      workload_mtu: 1500
+      felix_input_mtu: 1440
+      ip_autodetection_method: first-found
+    weave:
+      password: ""
+heapster:
+  enabled: true
+  options:
+    heapster:
+      replicas: 2
+      sink: influxdb:http://heapster-influxdb.kube-system.svc:8086
+      service_type: ClusterIP
+    influxdb:
+      pvc_name: ""
+metricsserver:
+  enabled: true
+dashboard:
+  enabled: true
+  options:
+    service_type: ""
+helm:
+  enabled: true
+  namespace: kube-system
+rescheduler:
+  enabled: true
+insecure_networking_etcd: false
+http_proxy: ""
+https_proxy: ""
+no_proxy: node1,192.168.122.200
+node_labels:
+  node1: []
+node_taints:
+  node1: []
+kubelet_node_overrides:
+  node1: {}

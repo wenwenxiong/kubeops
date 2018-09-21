@@ -1,0 +1,45 @@
+---
+  - name: create /etc/kubernetes/specs directory
+    file:
+      path: "{{ kubernetes_spec_dir }}"
+      state: directory
+  
+  - name: copy nfs-client-clusterrolebinding.yaml to remote
+    template:
+      src: nfs-client-clusterrolebinding.yaml
+      dest: "{{ kubernetes_spec_dir }}/nfs-client-clusterrolebinding.yaml"
+
+  - name: copy nfs-client-clusterrole.yaml to remote
+    template:
+      src: nfs-client-clusterrole.yaml
+      dest: "{{ kubernetes_spec_dir }}/nfs-client-clusterrole.yaml"
+
+  - name: copy nfs-client-deployment.yaml to remote
+    template:
+      src: nfs-client-deployment.yaml
+      dest: "{{ kubernetes_spec_dir }}/nfs-client-deployment.yaml"
+
+  - name: copy nfs-client-sc.yaml to remote
+    template:
+      src: nfs-client-sc.yaml
+      dest: "{{ kubernetes_spec_dir }}/nfs-client-sc.yaml"
+
+  - name: copy nfs-client-serviceaccount.yaml to remote
+    template:
+      src: nfs-client-serviceaccount.yaml
+      dest: "{{ kubernetes_spec_dir }}/nfs-client-serviceaccount.yaml"
+
+  - name: create serviceaccount
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/nfs-client-serviceaccount.yaml
+
+  - name: create clusterrole
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/nfs-client-clusterrole.yaml
+
+  - name: create clusterrolebinding
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/nfs-client-clusterrolebinding.yaml
+
+  - name: create nfs-client-deployment
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/nfs-client-deployment.yaml
+
+  - name: create nfs-client-sc
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/nfs-client-sc.yaml

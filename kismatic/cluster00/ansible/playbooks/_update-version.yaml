@@ -1,0 +1,8 @@
+---
+  - hosts: all
+    any_errors_fatal: true
+    name: "Update Kismatic Version File"
+    become: yes
+
+    roles:
+      - role: update_version

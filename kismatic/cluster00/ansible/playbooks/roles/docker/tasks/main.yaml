@@ -1,0 +1,46 @@
+---
+  - name: configure docker storage driver devicemapper in direct-lvm mode
+    include: direct_lvm.yaml
+    when: "ansible_os_family == 'RedHat' and docker.storage.driver == 'devicemapper' and docker.storage.direct_lvm_block_device.path != ''"
+
+  - name: create /etc/docker directory
+    file:
+      path: /etc/docker
+      state: directory
+
+  - name: write docker config file
+    template:
+      src: daemon.json
+      dest: /etc/docker/daemon.json
+    register: config
+
+  # start and verify that Docker installed successfully and is running
+  - name: start docker service
+    service:
+      name: docker
+      state: started
+      enabled: yes
+    when: force_docker_restart is not defined or force_docker_restart|bool == false # only run if not going to restart right after
+
+  # force_kubelet_restart=true to force restart
+  # on install, service will be started with the task before this
+  # on upgrade, this will be restarted only of the package was upgraded
+  - name: restart docker service
+    service:
+      name: docker
+      state: restarted
+      enabled: yes
+    when: >
+      (config.changed) or
+      (force_docker_restart is defined and force_docker_restart|bool == true) or
+      ((upgrading is defined and upgrading|bool == true) and
+      (allow_package_installation|bool == false or
+      ((docker_installation_rpm is defined and docker_installation_rpm.changed == true) or
+      (docker_installation_deb is defined and docker_installation_deb.changed == true))))
+
+  - name: verify docker is running
+    command: docker ps
+
+  - name: run docker login
+    command: docker login -u {{ docker_registry_username }} -p {{ docker_registry_password }} {{ docker_registry_full_url }}
+    when: docker_registry_username != ""

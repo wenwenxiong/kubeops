@@ -1,0 +1,12 @@
+---
+  - name: copy logging image to remote
+    copy:   
+      src: logging
+      dest: /tmp/
+  - name: copy loggingtagandpush.sh to remote
+    copy:   
+      src: loggingtagandpush.sh
+      dest: /tmp/
+      mode: 0777
+  - name: load logging image
+    shell: /tmp/loggingtagandpush.sh chdir=/tmp

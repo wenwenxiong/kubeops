@@ -1,0 +1,13 @@
+---
+  - hosts: etcd
+    any_errors_fatal: true
+    name: "Deploy Etcd Certificates"
+    become: yes
+    vars_files:
+      - group_vars/all.yaml
+
+    roles:
+      - role: etcd-cert
+        etcd_install_dir: "/etc/etcd_k8s"
+      - role: etcd-cert
+        etcd_install_dir: "/etc/etcd_networking"

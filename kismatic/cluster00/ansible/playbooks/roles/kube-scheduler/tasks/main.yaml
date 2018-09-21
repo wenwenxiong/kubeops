@@ -1,0 +1,23 @@
+---
+  - name: create directory
+    file:
+      path: /etc
+      state: directory
+
+  - name: copy kube-scheduler kubeconfig
+    template:
+      src: kubeconfig.j2
+      dest: "{{ kubernetes_kubeconfig.scheduler }}"
+      owner: "{{ kubernetes_owner }}"
+      group: "{{ kubernetes_group }}"
+      mode: "{{ kubernetes_service_mode }}"
+
+  - name: copy kube-scheduler.yaml manifest
+    template:
+      src: kube-scheduler.yaml
+      dest: "{{ kubelet_pod_manifests_dir }}/kube-scheduler.yaml"
+      owner: "{{ kubernetes_owner }}"
+      group: "{{ kubernetes_group }}"
+      mode: "{{ kubernetes_service_mode }}"
+  
+  

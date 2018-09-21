@@ -1,0 +1,8 @@
+- name: istio
+  hosts: istio
+  remote_user: root
+  become: yes
+
+  roles:
+  - loadistioimages
+  - istio

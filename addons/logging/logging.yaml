@@ -1,0 +1,8 @@
+- name: logging
+  hosts: logging
+  remote_user: root
+  become: yes
+
+  roles:
+  - loadloggingimages
+  - logging

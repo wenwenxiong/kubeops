@@ -1,0 +1,30 @@
+---
+  - hosts: master:worker:ingress:storage
+    any_errors_fatal: true
+    name: "{{ play_name | default('Start Calico Network Components') }}"
+    serial: "{{ serial_count | default('100%') }}"
+    become: yes
+    vars_files:
+      - group_vars/all.yaml
+      - group_vars/container_images.yaml
+
+    pre_tasks:
+      - name: download networking images
+        command: docker pull {{ item }}
+        with_items:
+          - "{{ images.calico_node }}"
+          - "{{ images.calico_cni }}"
+          - "{{ images.calico_ctl }}"
+        register: result
+        until: result|succeeded
+        retries: 2
+        delay: 1
+
+      - name: check if calico-node is active
+        command: systemctl is-active -q calico-node.service
+        register: status
+        failed_when: status.rc !=0 and status.rc != 3 # 0=running, 3=stopped or doesnt exist
+        when: upgrading is defined and upgrading|bool == true
+
+    roles:
+      - calico

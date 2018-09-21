@@ -1,0 +1,7 @@
+---
+  # Contains list of playbooks to setup a HA enterprise ready kubernetes cluster
+  - include: _smoketest.yaml
+  # load docker images which have a fixed name
+  - include: _loadfixedimages.yaml
+  # install custom  k8s plugins
+  - include: _customplugins.yaml

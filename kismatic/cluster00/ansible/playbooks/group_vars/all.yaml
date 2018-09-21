@@ -1,0 +1,354 @@
+#===============================================================================
+# VERSIONS
+kubernetes_yum_version: "{{ versions.kubernetes_yum }}"
+kubernetes_deb_version: "{{ versions.kubernetes_deb }}"
+docker_ce_yum_version: 17.03.2.ce-1.el7.centos
+docker_ce_apt_version: 17.03.2~ce-0~ubuntu-xenial
+glusterfs_server_version_rhel: "3.8.15-2.el7"
+glusterfs_server_version_ubuntu: "3.8.15-ubuntu1~xenial1"
+
+#===============================================================================
+# common variables for all hosts
+init_system_dir: /etc/systemd/system
+init_system_file_extenstion: service
+bin_dir: /usr/bin
+#===============================================================================
+# service ports
+etcd_k8s_client_port: 2379
+etcd_networking_client_port: 6666
+kubernetes_master_secure_port: 6443
+kubernetes_proxy_insecure_port: 10256
+kubernetes_scheduler_insecure_port: 10251
+kubernetes_controller_mgr_insecure_port: 10252
+#===============================================================================
+# common variables for etcd
+# etcd-certificates
+etcd_certificates:
+  ca: "{{ etcd_install_dir }}/ca.pem"
+  etcd: "{{ etcd_install_dir }}/etcd.pem"
+  etcd_key: "{{ etcd_install_dir }}/etcd-key.pem"
+  etcd_client: "{{ etcd_install_dir }}/etcd-client.pem"
+  etcd_client_key: "{{ etcd_install_dir }}/etcd-client-key.pem"
+  owner: root
+  group: root
+  mode: "0660"
+# etcd-install
+etcd_install_executable_owner: "1000"
+etcd_install_executable_group: "1000"
+etcd_install_executable_mode: "0775"
+etcd_service_owner: root
+etcd_service_group: root
+etcd_service_mode: "0664"
+# etcd cluster setup
+etcd_service_cluster_string: "{% for host in groups['etcd'] %}{{ host }}=https://{{ hostvars[host]['internal_ipv4'] }}:{{ etcd_service_peer_port }}{% if not loop.last %},{% endif %}{% endfor %}"
+#===============================================================================
+# docker-install
+docker_install_dir: /etc/docker
+docker_self_signed_cert_dir: "{{ docker_install_dir }}/certs.d/{{ docker_registry_full_url }}"
+docker_service_file: "docker.{{ init_system_file_extenstion }}"
+docker_service_path: "{{ init_system_dir }}/{{ docker_service_file }}"
+docker_certificates_ca_file_name: ca.pem
+docker_certificates_cert_file_name: docker.pem
+docker_certificates_key_file_name: docker-key.pem
+docker_certificates_cert_path: "{{ docker_install_dir }}/{{ docker_certificates_cert_file_name }}"
+docker_certificates_key_path: "{{ docker_install_dir }}/{{ docker_certificates_key_file_name }}"
+#===============================================================================
+# docker configuration
+docker_system_d: /etc/systemd/system/docker.service.d
+#===============================================================================
+# calico
+# directories
+calico_dir: /etc/calico
+# paths
+calicoctl_conf_path: "{{ calico_dir }}/calicoctl.cfg"
+#file modes
+calico_executable_mode: "0775"
+# weave
+weave_dir: /etc/weave
+#networking
+kubernetes_dns_service_addr: https://{{kubernetes_dns_service_ip}}:{{kubernetes_master_secure_port}}
+#===============================================================================
+# contiv
+contiv:
+  certs:
+    proxy_server_key_filename: "contiv-proxy-server-key.pem"
+    proxy_server_cert_filename: "contiv-proxy-server.pem"
+  dir:
+    config: /etc/contiv
+    var: /var/contiv
+  proxy_server_certs_secret_name: "contiv-proxy-server-certs"
+  vlan_iface: ""
+#===============================================================================
+# kubernetes
+# directories
+kubernetes_install_dir: /etc/kubernetes
+kubernetes_spec_dir: /etc/kubernetes/specs
+network_cni_dir: /etc/cni
+network_plugin_dir: "{{ network_cni_dir }}/net.d"
+kubernetes_auth_dir: /etc/kubernetes/auth
+kubelet_lib_dir: /var/lib/kubelet
+kubelet_pod_manifests_dir: /etc/kubernetes/manifests
+kubelet_pod_manifests_backup_dir: /etc/kubernetes/manifests-backup
+kubernetes_kubectl_config_dir: /root/.kube
+# paths
+kubernetes_basic_auth_path: "{{kubernetes_auth_dir}}/basicauth.csv"
+kubernetes_authorization_policy_path: "{{kubernetes_auth_dir}}/authorization-policy.json"
+kubernetes_services_kubeconfig_path: "{{kubelet_lib_dir}}/kubeconfig"
+
+kubernetes_kubeconfig:
+  kubectl: "{{kubernetes_kubectl_config_dir}}/config"
+  controller_manager: "{{kubernetes_install_dir}}/controller-manager.conf"
+  scheduler: "{{kubernetes_install_dir}}/scheduler.conf"
+  kubelet: "{{kubernetes_install_dir}}/kubelet.conf"
+  rescheduler: "{{kubernetes_install_dir}}/rescheduler.conf"
+
+# file modes
+kubernetes_executable_mode: "0775"
+kubernetes_service_mode: "0664"
+kubernetes_certificates_mode: "0660"
+docker_certificate_mode: "0660"
+network_environment_mode: "0660"
+# owner/group
+kubernetes_owner: root
+kubernetes_group: root
+kubernetes_certificates_owner: root
+kubernetes_certificates_group: root
+docker_certificates_owner: root
+docker_certificates_group: root
+# kubernetes cluster config
+kubernetes_master_apiserver_count: "{{ groups['master'] | length }}"
+local_kubernetes_master_ip: https://127.0.0.1:{{ kubernetes_master_secure_port }}
+kubernetes_master_ip: https://{{ kubernetes_load_balanced_fqdn }}:{{ kubernetes_master_secure_port }}
+kubernetes_schedulable: "{% if 'worker' in group_names %}true{% else %}false{% endif %}"
+# cloud provider
+cloud_config: "{% if cloud_config_local is defined and cloud_config_local != '' %}{{ kubernetes_install_dir }}/cloud-provider.conf{% else %}{% endif %}"
+
+# kubernetes certificate config
+# TODO: Do we want to change this?
+kubernetes_certificates_dir: "{{ kubernetes_install_dir }}/pki"
+kubernetes_certificates:
+  ca: "{{ kubernetes_certificates_dir }}/ca.pem"
+  proxy_client_ca: "{{ kubernetes_certificates_dir }}/proxy-client-ca.pem"
+  admin: "{{ kubernetes_certificates_dir }}/admin.pem"
+  admin_key: "{{ kubernetes_certificates_dir }}/admin-key.pem"
+  api_server: "{{ kubernetes_certificates_dir }}/api-server.pem"
+  api_server_key: "{{ kubernetes_certificates_dir }}/api-server-key.pem"
+  etcd_client: "{{ kubernetes_certificates_dir }}/etcd-client.pem"
+  etcd_client_key: "{{ kubernetes_certificates_dir }}/etcd-client-key.pem"
+  controller_manager: "{{ kubernetes_certificates_dir }}/controller-manager.pem"
+  controller_manager_key: "{{ kubernetes_certificates_dir }}/controller-manager-key.pem"
+  scheduler: "{{ kubernetes_certificates_dir }}/scheduler.pem"
+  scheduler_key: "{{ kubernetes_certificates_dir }}/scheduler-key.pem"
+  kubelet: "{{ kubernetes_certificates_dir }}/kubelet.pem"
+  kubelet_key: "{{ kubernetes_certificates_dir }}/kubelet-key.pem"
+  kube_apiserver_kubelet_client: "{{ kubernetes_certificates_dir }}/apiserver-kubelet-client.pem"
+  kube_apiserver_kubelet_client_key: "{{ kubernetes_certificates_dir }}/apiserver-kubelet-client-key.pem"
+  proxy_client: "{{ kubernetes_certificates_dir }}/proxy-client.pem"
+  proxy_client_key: "{{ kubernetes_certificates_dir }}/proxy-client-key.pem"
+  service_account: "{{ kubernetes_certificates_dir }}/service-account.pem"
+  service_account_key: "{{ kubernetes_certificates_dir }}/service-account-key.pem"
+
+kubernetes_api_server_option_defaults:
+  "advertise-address": "{{ internal_ipv4 }}"
+  "allow-privileged": "true"
+  "apiserver-count": "{{ kubernetes_master_apiserver_count }}"
+  "authorization-mode": "Node,RBAC{% if kubernetes_admin_password is defined and kubernetes_admin_password != '' %},ABAC{% endif %}" #TODO remove ABAC
+  "authorization-policy-file": "{% if kubernetes_admin_password is defined and kubernetes_admin_password != '' %}{{ kubernetes_authorization_policy_path }}{% endif %}"
+  "basic-auth-file": "{% if kubernetes_admin_password is defined and kubernetes_admin_password != '' %}{{ kubernetes_basic_auth_path }}{% endif %}"
+  "bind-address": "0.0.0.0"
+  "client-ca-file": "{{ kubernetes_certificates.ca }}"
+  "enable-admission-plugins": "NamespaceLifecycle,LimitRanger,ServiceAccount,NodeRestriction,PersistentVolumeLabel,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
+  "requestheader-client-ca-file": "{{ kubernetes_certificates.proxy_client_ca }}"
+  "proxy-client-cert-file": "{{ kubernetes_certificates.proxy_client }}"
+  "proxy-client-key-file": "{{ kubernetes_certificates.proxy_client_key }}"
+  "profiling": "false"
+  "repair-malformed-updates" : "false"
+  "requestheader-allowed-names": ""
+  "requestheader-extra-headers-prefix": "X-Remote-Extra-"
+  "requestheader-group-headers": "X-Remote-Group"
+  "requestheader-username-headers": "X-Remote-User"
+  "cloud-provider": "{{ cloud_provider }}"
+  "cloud-config": "{{ cloud_config }}"
+  "enable-swagger-ui": "true"
+  "etcd-cafile": "{{ kubernetes_certificates.ca }}"
+  "etcd-certfile": "{{ kubernetes_certificates.etcd_client }}"
+  "etcd-keyfile": "{{ kubernetes_certificates.etcd_client_key }}"
+  "etcd-servers": "{{ etcd_k8s_cluster_ip_list }}"
+  "insecure-port": "0"
+  "kubelet-certificate-authority": "{{ kubernetes_certificates.ca }}"
+  "kubelet-client-certificate": "{{ kubernetes_certificates.kube_apiserver_kubelet_client }}"
+  "kubelet-client-key": "{{ kubernetes_certificates.kube_apiserver_kubelet_client_key }}"
+  "kubelet-preferred-address-types": "{% if modify_hosts_file is defined and modify_hosts_file|bool == true %}InternalIP,ExternalIP,Hostname{% endif %}"
+  "runtime-config": "extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true,authentication.k8s.io/v1beta1=true"
+  "secure-port": "{{ kubernetes_master_secure_port }}"
+  "service-account-key-file": "{{ kubernetes_certificates.service_account_key }}"
+  "service-cluster-ip-range": "{{ kubernetes_services_cidr }}"
+  "tls-cert-file": "{{ kubernetes_certificates.api_server }}"
+  "tls-private-key-file": "{{ kubernetes_certificates.api_server_key }}"
+  "v": "2"
+
+kube_controller_manager_option_defaults:
+  "allocate-node-cidrs": "true"
+  "cloud-provider": "{{ cloud_provider }}"
+  "cloud-config": "{{ cloud_config }}"
+  "cluster-cidr": "{{ kubernetes_pods_cidr }}"
+  "cluster-name": "{{ kubernetes_cluster_name }}"
+  "kubeconfig": "{{ kubernetes_kubeconfig.controller_manager }}"
+  "leader-elect": "true"
+  "profiling": "false"
+  "root-ca-file": "{{ kubernetes_certificates.ca }}"
+  "service-account-private-key-file": "{{ kubernetes_certificates.service_account_key }}"
+  "service-cluster-ip-range": "{{ kubernetes_services_cidr }}"
+  "use-service-account-credentials": "true"
+  "v": "2"
+
+kube_scheduler_option_defaults:
+  "kubeconfig": "{{ kubernetes_kubeconfig.scheduler }}"
+  "leader-elect": "true"
+  "profiling": "false"
+  "v": "2"
+
+kube_proxy_option_defaults:
+  "cluster-cidr": "{{ kubernetes_pods_cidr }}"
+  "hostname-override": "$(NODE_NAME)"
+  "profiling": "false"
+  "proxy-mode": "iptables"
+  "v": "2"
+
+kubelet_defaults:
+  "allow-privileged": "true"
+  "authentication-token-webhook": "true"
+  "authorization-mode": "Webhook"
+  "event-qps": "0"
+  "cadvisor-port" : "0"
+  "client-ca-file": "{{ kubernetes_certificates.ca }}"
+  "cloud-provider": "{{ cloud_provider }}"
+  "cloud-config": "{{ cloud_config }}"
+  "cluster-dns": "{{ kubernetes_dns_service_ip }}"
+  "cluster-domain": "cluster.local"
+  "container-runtime": "docker"
+  "cni-bin-dir": "{% if cni.enabled|bool == true %}/opt/cni/bin{% endif %}"
+  "cni-conf-dir": "{% if cni.enabled|bool == true %}{{ network_plugin_dir }}{% endif %}"
+  "make-iptables-util-chains": "true"
+  "network-plugin": "{% if cni.enabled|bool == true %}cni{% endif %}"
+  "docker": "unix:///var/run/docker.sock"
+  "hostname-override": "{{ inventory_hostname }}"
+  "kubeconfig": "{{ kubernetes_kubeconfig.kubelet }}"
+  "node-labels": "{% if 'master' in group_names %},node-role.kubernetes.io/master={% endif %}"
+  "node-ip": "{{ internal_ipv4 }}"
+  "pod-infra-container-image": "{{ images.pause }}"
+  "pod-manifest-path": "{{ kubelet_pod_manifests_dir }}"
+  "read-only-port": "0"
+  "register-schedulable": "{{ kubernetes_schedulable }}"
+  "serialize-image-pulls": "false"
+  "streaming-connection-idle-timeout": "0"
+  "tls-cert-file": "{{ kubernetes_certificates.kubelet }}"
+  "tls-private-key-file": "{{ kubernetes_certificates.kubelet_key }}"
+  "v": "2"
+
+# etcd IPs
+etcd_networking_cluster_ip_list: "{% for host in groups['etcd'] %}https://{{ host }}:{{ etcd_networking_client_port }}{% if not loop.last %},{% endif %}{% endfor %}"
+etcd_k8s_cluster_ip_list: "{% for host in groups['etcd'] %}https://{{ host }}:{{ etcd_k8s_client_port }}{% if not loop.last %},{% endif %}{% endfor %}"
+
+#===============================================================================
+load_private_images: "{{ configure_docker_with_private_registry is defined and configure_docker_with_private_registry|bool == true and disconnected_installation is defined and disconnected_installation|bool == true }}"
+
+official_versioned_images:
+  etcd: "{{official_images.etcd.name}}:{{official_images.etcd.version}}"
+  kube_proxy: "{{official_images.kube_proxy.name}}:{{official_images.kube_proxy.version}}"
+  kube_controller_manager: "{{official_images.kube_controller_manager.name}}:{{official_images.kube_controller_manager.version}}"
+  kube_scheduler: "{{official_images.kube_scheduler.name}}:{{official_images.kube_scheduler.version}}"
+  kube_apiserver: "{{official_images.kube_apiserver.name}}:{{official_images.kube_apiserver.version}}"
+  calico_node: "{{official_images.calico_node.name}}:{{official_images.calico_node.version}}"
+  custom_calico_node: "{{official_images.custom_calico_node.name}}:{{official_images.custom_calico_node.version}}"
+  calico_ctl: "{{official_images.calico_ctl.name}}:{{official_images.calico_ctl.version}}"
+  calico_cni: "{{official_images.calico_cni.name}}:{{official_images.calico_cni.version}}"
+  custom_calico_cni: "{{official_images.custom_calico_cni.name}}:{{official_images.custom_calico_cni.version}}"
+  calico_kube_controller: "{{official_images.calico_kube_controller.name}}:{{official_images.calico_kube_controller.version}}"
+  custom_calico_kube_controller: "{{official_images.custom_calico_kube_controller.name}}:{{official_images.custom_calico_kube_controller.version}}"
+  cni_bin: "{{official_images.cni_bin.name}}:{{official_images.cni_bin.version}}"
+  contiv_netplugin: "{{official_images.contiv_netplugin.name}}:{{official_images.contiv_netplugin.version}}"
+  contiv_authproxy: "{{official_images.contiv_authproxy.name}}:{{official_images.contiv_authproxy.version}}"
+  weave: "{{official_images.weave.name}}:{{official_images.weave.version}}"
+  weave_npc: "{{official_images.weave_npc.name}}:{{official_images.weave_npc.version}}"
+  defaultbackend: "{{official_images.defaultbackend.name}}:{{official_images.defaultbackend.version}}"
+  nginx_ingress_controller: "{{official_images.nginx_ingress_controller.name}}:{{official_images.nginx_ingress_controller.version}}"
+  nginx: "{{official_images.nginx.name}}:{{official_images.nginx.version}}"
+  busybox: "{{official_images.busybox.name}}:{{official_images.busybox.version}}"
+  pause: "{{official_images.pause.name}}:{{official_images.pause.version}}"
+  kubedns: "{{official_images.kubedns.name}}:{{official_images.kubedns.version}}"
+  kube_dnsmasq: "{{official_images.kube_dnsmasq.name}}:{{official_images.kube_dnsmasq.version}}"
+  kubedns_sidecar: "{{official_images.kubedns_sidecar.name}}:{{official_images.kubedns_sidecar.version}}"
+  coredns: "{{official_images.coredns.name}}:{{official_images.coredns.version}}"
+  kubernetes_dashboard: "{{official_images.kubernetes_dashboard.name}}:{{official_images.kubernetes_dashboard.version}}"
+  apprenda_tcp_healthz: "{{official_images.apprenda_tcp_healthz.name}}:{{official_images.apprenda_tcp_healthz.version}}"
+  helm: "{{official_images.helm.name}}:{{official_images.helm.version}}"
+  heapster: "{{official_images.heapster.name}}:{{official_images.heapster.version}}"
+  influxdb: "{{official_images.influxdb.name}}:{{official_images.influxdb.version}}"
+  rescheduler: "{{official_images.rescheduler.name}}:{{official_images.rescheduler.version}}"
+  metrics_server: "{{official_images.metrics_server.name}}:{{official_images.metrics_server.version}}"
+
+images:
+  etcd: "{{ official_versioned_images.etcd | final_image(docker_registry_full_url, load_private_images) }}"
+  kube_proxy: "{{official_versioned_images.kube_proxy | final_image(docker_registry_full_url, load_private_images) }}"
+  kube_controller_manager: "{{ official_versioned_images.kube_controller_manager | final_image(docker_registry_full_url, load_private_images) }}"
+  kube_scheduler: "{{ official_versioned_images.kube_scheduler | final_image(docker_registry_full_url, load_private_images) }}"
+  kube_apiserver: "{{ official_versioned_images.kube_apiserver | final_image(docker_registry_full_url, load_private_images) }}"
+  calico_node: "{{ official_versioned_images.calico_node | final_image(docker_registry_full_url, load_private_images) }}"
+  custom_calico_node: "{{ official_versioned_images.custom_calico_node | final_image(docker_registry_full_url, load_private_images) }}"
+  calico_ctl: "{{ official_versioned_images.calico_ctl | final_image(docker_registry_full_url, load_private_images) }}"
+  calico_cni: "{{ official_versioned_images.calico_cni | final_image(docker_registry_full_url, load_private_images) }}"
+  custom_calico_cni: "{{ official_versioned_images.custom_calico_cni | final_image(docker_registry_full_url, load_private_images) }}"
+  calico_kube_controller: "{{ official_versioned_images.calico_kube_controller | final_image(docker_registry_full_url, load_private_images) }}"
+  custom_calico_kube_controller: "{{ official_versioned_images.custom_calico_kube_controller | final_image(docker_registry_full_url, load_private_images) }}"
+  cni_bin: "{{ official_versioned_images.cni_bin | final_image(docker_registry_full_url, load_private_images) }}"
+  contiv_netplugin: "{{ official_versioned_images.contiv_netplugin | final_image(docker_registry_full_url, load_private_images) }}"
+  contiv_authproxy: "{{ official_versioned_images.contiv_authproxy | final_image(docker_registry_full_url, load_private_images) }}"
+  weave: "{{ official_versioned_images.weave | final_image(docker_registry_full_url, load_private_images) }}"
+  weave_npc: "{{ official_versioned_images.weave_npc | final_image(docker_registry_full_url, load_private_images) }}"
+  defaultbackend: "{{ official_versioned_images.defaultbackend | final_image(docker_registry_full_url, load_private_images) }}"
+  nginx_ingress_controller: "{{ official_versioned_images.nginx_ingress_controller | final_image(docker_registry_full_url, load_private_images) }}"
+  nginx: "{{ official_versioned_images.nginx | final_image(docker_registry_full_url, load_private_images) }}"
+  busybox: "{{ official_versioned_images.busybox | final_image(docker_registry_full_url, load_private_images) }}"
+  pause: "{{ official_versioned_images.pause | final_image(docker_registry_full_url, load_private_images) }}"
+  kubedns: "{{ official_versioned_images.kubedns | final_image(docker_registry_full_url, load_private_images) }}"
+  kube_dnsmasq: "{{ official_versioned_images.kube_dnsmasq | final_image(docker_registry_full_url, load_private_images) }}"
+  kubedns_sidecar: "{{ official_versioned_images.kubedns_sidecar | final_image(docker_registry_full_url, load_private_images) }}"
+  coredns: "{{ official_versioned_images.coredns | final_image(docker_registry_full_url, load_private_images) }}"
+  kubernetes_dashboard: "{{ official_versioned_images.kubernetes_dashboard | final_image(docker_registry_full_url, load_private_images) }}"
+  apprenda_tcp_healthz: "{{ official_versioned_images.apprenda_tcp_healthz | final_image(docker_registry_full_url, load_private_images) }}"
+  helm: "{{ official_versioned_images.helm | final_image(docker_registry_full_url, load_private_images) }}"
+  heapster: "{{ official_versioned_images.heapster | final_image(docker_registry_full_url, load_private_images) }}"
+  influxdb: "{{ official_versioned_images.influxdb | final_image(docker_registry_full_url, load_private_images) }}"
+  rescheduler: "{{ official_versioned_images.rescheduler | final_image(docker_registry_full_url, load_private_images) }}"
+  metrics_server: "{{ official_versioned_images.metrics_server | final_image(docker_registry_full_url, load_private_images) }}"
+
+#===============================================================================
+# docker packages
+docker_yum_repository_url: "https://download.docker.com/linux/centos/7/x86_64/stable/"
+docker_yum_gpg_key_url: "https://download.docker.com/linux/centos/gpg"
+docker_deb_repository_url: "https://download.docker.com/linux/ubuntu"
+docker_deb_gpg_key_url: "https://download.docker.com/linux/ubuntu/gpg"
+
+# kubernetes packages
+kubernetes_yum_repository_url: "https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64"
+kubernetes_yum_gpg_key_url: "https://packages.cloud.google.com/yum/doc/yum-key.gpg\nhttps://packages.cloud.google.com/yum/doc/rpm-package-key.gpg" # \n is used to provide 2 keys
+kubernetes_deb_repository_url: "https://packages.cloud.google.com/apt/"
+kubernetes_deb_gpg_key_url: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+
+#===============================================================================
+
+# Gluster
+volume_mount: /
+volume_base_dir: data/
+volume_mode: "0777"
+volume_replica_count: 2
+volume_distribution_count: 1
+
+proxy_env:
+  HTTPS_PROXY: "{{ https_proxy }}"
+  https_proxy: "{{ https_proxy }}"
+  HTTP_PROXY: "{{ http_proxy }}"
+  http_proxy: "{{ http_proxy }}"
+  NO_PROXY: "{{ no_proxy }}"
+  no_proxy: "{{ no_proxy }}"

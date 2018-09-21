@@ -1,0 +1,9 @@
+---
+  # update hosts files of all nodes
+  - hosts: all
+    any_errors_fatal: true
+    name: "Update Hosts File"
+    become: yes
+
+    roles:
+      - role: hosts

@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: konga-db-create
+spec:
+  template:
+    metadata:
+      name: konga-db-create
+    spec:
+      containers:
+      - name: konga-db-create
+        image: portus.teligen.com:5000/kismatic110/postgres:9.6
+        env:
+          - name: POSTGRES_USER
+            value: kong
+          - name: POSTGRES_PASSWORD
+            value: kong
+          - name: POSTGRES_DB
+            value: kong
+        command: [ "/bin/sh", "-c", "PGPASSWORD=kong psql -h postgres -U kong -W kong -c 'CREATE DATABASE konga_database'" ]
+      restartPolicy: Never

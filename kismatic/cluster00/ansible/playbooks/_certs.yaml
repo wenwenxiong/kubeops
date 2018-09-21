@@ -1,0 +1,10 @@
+---
+  - hosts: master:worker:ingress:storage
+    any_errors_fatal: true
+    name: "Deploy Cluster Certificates"
+    become: yes
+    vars_files:
+      - group_vars/all.yaml
+
+    roles:
+      - kubenode-cert

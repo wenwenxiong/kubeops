@@ -1,0 +1,20 @@
+---
+  - hosts: master:worker:ingress:storage
+    any_errors_fatal: true
+    name: Label and Taint Kubernetes Nodes 
+    serial: "{{ serial_count | default('100%') }}"
+    become: yes
+    vars_files:
+      - group_vars/all.yaml
+      
+    tasks:
+      - name: label nodes with system labels
+        command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} label --overwrite nodes --selector kubernetes.io/hostname={{ inventory_hostname|lower }} kismatic/cni-provider={{ cni.provider| quote }}{% if 'ingress' in group_names%} kismatic/ingress=true{% endif %}{% if 'storage' in group_names%} kismatic/storage=true{% endif %}
+        
+      - name: label nodes with user defined labels
+        command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} label --overwrite nodes --selector kubernetes.io/hostname={{ inventory_hostname|lower }} {{ node_labels[inventory_hostname] | join(" ") }}
+        when: node_labels[inventory_hostname] is defined and node_labels[inventory_hostname]|length > 0
+
+      - name: taint nodes with user defined taint
+        command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} taint --overwrite nodes --selector kubernetes.io/hostname={{ inventory_hostname|lower }} {{ node_taints[inventory_hostname] | join(" ") }}
+        when: node_taints[inventory_hostname] is defined and node_taints[inventory_hostname]|length > 0

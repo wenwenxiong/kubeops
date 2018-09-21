@@ -1,0 +1,11 @@
+---
+  - hosts: all
+    any_errors_fatal: true
+    name: "Configure Package Repositories"
+    become: yes
+
+    roles:
+      - role: packages-cleanup
+        when: disconnected_installation|bool != true and upgrading is defined and upgrading|bool == true
+      - role: packages-repo
+        when: disconnected_installation|bool != true

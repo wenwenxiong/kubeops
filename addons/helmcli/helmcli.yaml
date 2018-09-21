@@ -1,0 +1,7 @@
+- name: helmcli
+  hosts: helmcli
+  remote_user: root
+  become: yes
+
+  roles:
+    - helmcli

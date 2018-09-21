@@ -1,0 +1,49 @@
+---
+  # Force fact gathering
+  - hosts: all
+    name: "Gather Node Facts"
+    gather_facts: yes
+    tasks: []
+  - include: _additional-files.yaml
+  # Drain the node before we touch it
+  - include: _kube-drain-node.yaml
+
+  - include: _packages-repo.yaml
+    when: allow_package_installation|bool == true
+
+  - include: _certs.yaml upgrading=true
+  - include: _certs-etcd.yaml upgrading=true
+
+  # docker
+  - include: _docker.yaml play_name="Upgrade Docker" upgrading=true
+    when: docker.enabled|bool == true
+
+  #etcd
+  - include: _etcd-k8s.yaml play_name="Upgrade Kubernetes Etcd Cluster" serial_count="1" upgrading=true
+  - include: _etcd-networking.yaml play_name="Upgrade Network Etcd Cluster" serial_count="1" upgrading=true
+    when: cni.enabled|bool == true and cni.provider == "calico"
+  
+  # kubernetes
+  - include: _kube-control-plane-stop.yaml
+  - include: _kubeconfig.yaml upgrading=true
+  - include: _kubelet.yaml play_name="Upgrade Kubernetes Kubelet" upgrading=true
+  - include: _kube-apiserver.yaml play_name="Upgrade Kubernetes API Server" upgrading=true
+  - include: _kube-scheduler.yaml play_name="Upgrade Kubernetes Scheduler" upgrading=true
+  - include: _kube-controller-manager.yaml play_name="Upgrade Kubernetes Controller Manager" upgrading=true
+  - include: _validate-control-plane-node.yaml serial_count="1" upgrading=true
+  - include: _kube-proxy.yaml play_name="Upgrade Kubernetes Proxy" upgrading=true
+  - include: _label-nodes.yaml
+  - include: _calico.yaml play_name="Upgrade Calico Cluster Network" upgrading=true
+    when: cni.enabled|bool == true and cni.provider == "calico"
+  - include: _calico-validate.yaml upgrading=true
+    when: cni.enabled|bool == true and cni.provider == "calico"
+  - include: _weave.yaml play_name="Upgrade Weave Cluster Network" upgrading=true
+    when: cni.enabled|bool == true and cni.provider == "weave"
+  - include: _weave-validate.yaml upgrading=true
+    when: cni.enabled|bool == true and cni.provider == "weave"
+  - include: _rescheduler.yaml play_name="Upgrade Kubernetes Pod Rescheduler" upgrading=true
+    when: rescheduler.enabled|bool == true
+    
+  - include: _kube-uncordon-node.yaml
+
+  - include: _update-version.yaml

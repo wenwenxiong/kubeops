@@ -1,0 +1,12 @@
+---
+  - name: copy nfsclient image to remote
+    copy:   
+      src: nfs
+      dest: /tmp/
+  - name: copy nfsclienttagandpush.sh to remote
+    copy:   
+      src: nfsclienttagandpush.sh
+      dest: /tmp/
+      mode: 0777
+  - name: load nfsclient image
+    shell: /tmp/nfsclienttagandpush.sh

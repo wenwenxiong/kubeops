@@ -1,0 +1,12 @@
+---
+  - name: copy kong image to remote
+    copy:   
+      src: kong
+      dest: /tmp/
+  - name: copy kongtagandpush.sh to remote
+    copy:   
+      src: kongtagandpush.sh
+      dest: /tmp/
+      mode: 0777
+  - name: load kong image
+    shell: /tmp/kongtagandpush.sh chdir=/tmp

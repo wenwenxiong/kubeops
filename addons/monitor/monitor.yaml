@@ -1,0 +1,8 @@
+- name: monitor
+  hosts: monitor
+  remote_user: root
+  become: yes
+
+  roles:
+  - loadmonitorimages
+  - monitor

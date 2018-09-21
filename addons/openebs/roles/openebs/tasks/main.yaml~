@@ -1,0 +1,8 @@
+---
+  - name: helm install openebs storage plugin
+    command: helm install --name openebs stable/openebs
+
+  - pause: seconds=15
+
+  - name: set storageclass openebs-standalone as default sc
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} patch storageclass openebs-standalone -p {%raw%}'{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"} } }'{%endraw%}

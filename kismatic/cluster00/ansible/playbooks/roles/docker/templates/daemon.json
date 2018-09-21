@@ -1,0 +1,8 @@
+{
+  "storage-driver": "{{ docker.storage.driver }}",
+  "storage-opts": 
+{{ docker.storage.opts_list | to_nice_json(indent=4) }},
+  "log-driver": "{{ docker.logs.driver }}",
+  "log-opts": 
+{{ docker.logs.opts | to_nice_json(indent=4) }}
+}
